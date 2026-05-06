@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  labels:
+{{- include "spring.labels" . | nindent 4 }}
+data:
+  db_name: {{ .Values.database.dbname }}
+  db_table: {{ .Values.database.dbtable }}

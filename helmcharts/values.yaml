@@ -1,0 +1,11 @@
+# Deployment
+pods:
+  image: yanivomc/spring-music
+  tag: latest
+  replica: 2
+
+database:
+  dbname: db_mysql
+  dbtable: music
+
+env: LOCAL

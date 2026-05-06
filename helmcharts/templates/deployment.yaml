@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+
+  name: {{ include "spring-music.name" . }}
+  labels:
+{{- include "spring.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.pods.replica }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+{{- include "spring.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: spring-music
+        image: "{{ .Values.pods.image }}:{{ .Values.pods.tag }}"
+        ports:
+        - containerPort: 8080

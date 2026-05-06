@@ -1,0 +1,16 @@
+2026-05-04 06:28:51,664 - INFO - Starting deployment for spring-music-prod
+2026-05-04 06:28:51,789 - ERROR - Helm deployment failed: Command '['helm', 'upgrade', '--install', 'spring-music-prod', './SpringMusic-Deployment', '--set', 'resources.requests.cpu=500m', '--set', 'resources.requests.memory=512Mi']' returned non-zero exit status 1.
+2026-05-04 06:50:23,521 - INFO - Provisioning started.
+2026-05-04 06:50:23,521 - ERROR - Provisioning failed due to network issue.
+2026-05-04 06:54:08,732 - INFO - Provisioning started.
+2026-05-04 06:54:08,733 - ERROR - Provisioning failed due to network issue.
+2026-05-04 06:54:08,733 - INFO - Provisioning db-server
+2026-05-04 06:54:08,733 - INFO - Provisioning started.
+2026-05-04 06:54:08,733 - ERROR - Provisioning failed due to network issue.
+2026-05-04 06:54:08,733 - INFO - Provisioning db-server
+2026-05-04 07:05:58,838 - INFO - Provisioning started.
+2026-05-04 07:05:58,838 - ERROR - Provisioning failed due to network issue.
+2026-05-04 07:05:58,838 - INFO - Provisioning db-server
+2026-05-04 07:05:58,838 - INFO - Provisioning started.
+2026-05-04 07:05:58,839 - ERROR - Provisioning failed due to network issue.
+2026-05-04 07:05:58,839 - INFO - Provisioning db-server
