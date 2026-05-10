@@ -8,4 +8,12 @@ database:
   dbname: db_mysql
   dbtable: music
 
-env: LOCAL
+env:
+  - name: MACHINE_NAME
+    value: {{ .Values.machine.name | quote }}
+  - name: MACHINE_OS
+    value: {{ .Values.machine.os | quote }}
+  - name: MACHINE_CPU
+    value: {{ .Values.machine.cpu | quote }}
+  - name: MACHINE_RAM
+    value: {{ .Values.machine.ram | quote }}
