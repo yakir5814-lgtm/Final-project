@@ -1,10 +1,14 @@
 import json
 import logging
 import os
-
+import sys
 
 os.makedirs('logs', exist_ok=True)
-logging.basicConfig(filename='logs/provisioning.log', level=logging.INFO, format='%(asctime)s - %(message)s')
+logging.basicConfig(
+    filename='logs/provisioning.log', 
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 class Machine:
     def __init__(self, name, os_type, cpu, ram):
@@ -15,23 +19,28 @@ class Machine:
         logging.info(msg)
         print(msg)
 
-def get_user_input():
-
-    name = input("Enter machine name: ")
-    os_type = input("Enter OS (Ubuntu/CentOS): ")
-    cpu = input("Enter CPU: ")
-    ram = input("Enter RAM: ")
+def get_config_from_env():
+    name = os.getenv("MACHINE_NAME", "default-server")
+    os_type = os.getenv("MACHINE_OS", "Ubuntu")
+    cpu = os.getenv("MACHINE_CPU", "1")
+    ram = os.getenv("MACHINE_RAM", "1Gi")
+    
     return Machine(name, os_type, cpu, ram)
 
 if __name__ == "__main__":
-    print("Provisioning started.")
+    print("Provisioning service started...")
     
     try:
-
-        server = get_user_input()
+    
+        server = get_config_from_env()
         server.provision()
-        print(server.data)
+        print(f"Data state: {json.dumps(server.data)}")
         
+        import time
+        while True:
+            time.sleep(3600)
+            
     except Exception as e:
-        logging.error(f"Error: {e}")
+        logging.error(f"Critical Error: {e}")
         print(f"Error: {e}")
+        sys.exit(1)
