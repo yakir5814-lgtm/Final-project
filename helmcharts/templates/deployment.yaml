@@ -20,4 +20,4 @@ spec:
       - name: spring-music
         image: "{{ .Values.pods.image }}:{{ .Values.pods.tag }}"
         ports:
-        - containerPort: 8080
+        - containerPort: {{ .Values.service.targetPort }}
