@@ -8,5 +8,11 @@ database:
   dbname: db_mysql
   dbtable: music
 
-env:
+service:
+  type: ClusterIP
+  port: 80       
+  targetPort: 8000 
+  name: http
 
+env:
+  APP_PORT: "8000"
