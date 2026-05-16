@@ -15,4 +15,5 @@ service:
   name: http
 
 env:
+  type: "LOCAL"
   APP_PORT: "8000"
