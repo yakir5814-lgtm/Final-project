@@ -5,7 +5,7 @@ metadata:
   labels:
 {{- include "spring.labels" . | nindent 4 }}
 spec:
-  # לוגיקה לפי שקף 163 (אם LOCAL אז NodePort)
+
   type: {{ if eq .Values.env.type "LOCAL" }}NodePort{{ else }}LoadBalancer{{ end }}
   ports:
     - port: 80
