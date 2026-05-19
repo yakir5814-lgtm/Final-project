@@ -47,13 +47,24 @@ pipeline {
                     } 
                 }
                 
-                // 2. Fixed Sonarqube stage using a script block for the Shared Library calls
+                // 2. השלב המעודכן שמריץ את הסורק הרשמי בצורה נקייה ויציבה
                 stage('Sonarqube') { 
                     steps { 
-                        echo 'Analyzing code quality via Shared Library...'
+                        echo 'Analyzing code quality via official SonarQube Scanner...'
                         script {
-                            codeQuality.sonarCreateProject('my-app')
-                            codeQuality.sonarLocalScan()
+                            // הגדרת משתנה עבור נתיב הסורק שהותקן בג'נקינס (במדור Global Tool Configuration)
+                            def scannerHome = tool 'SonarQubeScanner'
+                            
+                            // הבלוק הזה מזריק אוטומטית את ה-URL והטוקן שהגדרת ב-System של ג'נקינס
+                            withSonarQubeEnv('SonarQubeScanner') {
+                                sh """
+                                    ${scannerHome}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=my-app \
+                                    -Dsonar.projectName=my-app \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.sourceEncoding=UTF-8
+                                """
+                            }
                         }
                     } 
                 }
