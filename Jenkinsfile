@@ -52,10 +52,9 @@ pipeline {
                     steps { 
                         echo 'Analyzing code quality via official SonarQube Scanner...'
                         script {
-                            // הגדרת משתנה עבור נתיב הסורק שהותקן בג'נקינס (במדור Global Tool Configuration)
+
                             def scannerHome = tool 'SonarQubeScanner'
                             
-                            // הבלוק הזה מזריק אוטומטית את ה-URL והטוקן שהגדרת ב-System של ג'נקינס
                             withSonarQubeEnv('SonarQubeScanner') {
                                 sh """
                                     ${scannerHome}/bin/sonar-scanner \
