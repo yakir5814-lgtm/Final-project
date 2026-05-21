@@ -47,12 +47,10 @@ pipeline {
                     } 
                 }
                 
-                // 2. השלב המעודכן שמריץ את הסורק הרשמי בצורה נקייה ויציבה
                 stage('Sonarqube') { 
                     steps { 
                         echo 'Analyzing code quality via official SonarQube Scanner...'
                         script {
-
                             def scannerHome = tool 'SonarQubeScanner'
                             
                             withSonarQubeEnv('SonarQubeScanner') {
@@ -105,6 +103,17 @@ pipeline {
                     steps { 
                         echo 'Running unit tests...' 
                     } 
+                }
+            }
+        }
+
+        // המיקום הנכון של ה-Helm Deployment: אחרי הבדיקות וה-Push
+        stage('Deploy via Helm') {
+            when { expression { env.ACTION == 'Proceed' } }
+            steps {
+                script {
+                    echo 'Deploying application to Kubernetes using Helm...'
+                    sh 'helm upgrade --install my-app ./helmcharts --namespace default'
                 }
             }
         }
