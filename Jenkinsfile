@@ -1,35 +1,36 @@
-def appname = "hello-newapp"
-def repo = "elevy99927"  // Replace with your DockerHub username
-def appimage = "docker.io/${repo}/${appname}"
-def apptag = "${env.BUILD_NUMBER}"
+@Library('my-shared-library') _
 
-podTemplate(cloud: 'kubernetes', containers: [
-    containerTemplate(
-        name: 'jnlp', 
-        image: 'jenkins/inbound-agent:latest'
-    ),
-     containerTemplate(
-        name: 'docker', 
-        image: 'docker:26-dind', // Use the latest stable DinD image
-        privileged: true,      // Essential for Docker daemon to run
-        args: '--storage-driver=vfs' // VFS is safest for K8s, though slower
-    )], 
-  volumes: [
-    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) // Q: Why do we need this volume?
-  ]) {
-    node(POD_LABEL) {
-        stage('chackout') {
-            container('jnlp') {
-            sh '/usr/bin/git config --global http.sslVerify false'
-	    checkout scm
-          }
-        } // end chackout
+pipeline {
+    agent any
 
+    stages {
         stage('Hello') {
-            container('docker') {
-              echo "Building docker image..."
-              sh "echo docker push $appimage"
+            steps { 
+                echo 'Hello World' 
             }
-        } //end hello
+        }
+
+        stage('Wait for User Approval') {
+            steps {
+                script {
+                    def userInput = input message: 'Ready to build?',
+                                         parameters: [choice(name: 'Option', choices: 'Proceed\nAbort')]
+                    env.ACTION = userInput
+                }
+            }
+        }
+
+        stage('Build in Parallel') {
+            when { expression { env.ACTION == 'Proceed' } }
+            parallel {
+                stage('Bandit scan') { steps { echo 'Running Bandit...' } }
+                stage('Docker Build') { steps { echo 'Building Docker...' } }
+                stage('Trivy scan') { steps { echo 'Scanning...' } }
+            }
+        }
+
+        stage('Finalize the Pipeline') {
+            steps { echo 'Done' }
+        }
     }
 }
