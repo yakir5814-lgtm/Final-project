@@ -1,35 +1,36 @@
-def appname = "hello-newapp"
-def repo = "elevy99927"  // Replace with your DockerHub username
-def appimage = "docker.io/${repo}/${appname}"
-def apptag = "${env.BUILD_NUMBER}"
+def appname = "final-project"
+def repo = "yakir5814"
+def appimage = "docker.io/" + repo + "/" + appname
+def apptag = env.BUILD_NUMBER
 
-podTemplate(cloud: 'kubernetes', containers: [
-    containerTemplate(
-        name: 'jnlp', 
-        image: 'jenkins/inbound-agent:latest'
-    ),
-     containerTemplate(
-        name: 'docker', 
-        image: 'docker:26-dind', // Use the latest stable DinD image
-        privileged: true,      // Essential for Docker daemon to run
-        args: '--storage-driver=vfs' // VFS is safest for K8s, though slower
-    )], 
-  volumes: [
-    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) // Q: Why do we need this volume?
-  ]) {
+podTemplate(cloud: 'Kubernetes', containers: [
+    containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
+    containerTemplate(name: 'docker', image: 'docker:26-dind', privileged: true, args: '--storage-driver=vfs')
+    ],
+    volumes: [emptyDirVolume(mountPath: '/var/lib/docker', memory: false)]) {
     node(POD_LABEL) {
-        stage('chackout') {
+        stage('Checkout') {
             container('jnlp') {
-            sh '/usr/bin/git config --global http.sslVerify false'
-	    checkout scm
-          }
-        } // end chackout
-
-        stage('Hello') {
-            container('docker') {
-              echo "Building docker image..."
-              sh "echo docker push $appimage"
+                checkout scm
             }
-        } //end hello
+        }
+        stage('Build') {
+            container('docker') {
+                sh "docker build -t " + appimage + ":" + apptag + " ."
+            }
+        }
+        stage('Push') {
+            container('docker') {
+                withCredentials([usernamePassword(credentialsId: 'my-login-secret', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "docker login -u $DOCKER_USER -p $DOCKER_PASS"
+                    sh "docker push " + appimage + ":" + apptag
+                }
+            }
+        }
+        stage('Done') {
+            container('jnlp') {
+                echo "Pipeline finished!"
+            }
+        }
     }
 }
