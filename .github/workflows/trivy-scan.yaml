@@ -22,11 +22,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Trivy CLI
-        uses: aquasecurity/setup-trivy@v0.2.1
-        with:
-          cache: true
-
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -34,3 +29,5 @@ jobs:
           scan-ref: '.'
           exit-code: '1'
           severity: '${{ inputs.severity_level }}'
+          # שימוש בבופר/מטמון של Trivy (dependency cache)
+          cache: true
