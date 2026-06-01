@@ -28,6 +28,10 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           exit-code: '1'
-          severity: '${{ inputs.severity_level }}'
-          # שימוש בבופר/מטמון של Trivy (dependency cache)
+          severity: '${{ inputs.severity_level || 'HIGH,CRITICAL' }}'
           cache: true
+
+      - name: Build Application
+        run: |
+          echo "Trivy scan passed successfully!"
+          echo "Starting the application build process..."
