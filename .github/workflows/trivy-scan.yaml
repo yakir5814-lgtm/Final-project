@@ -1,0 +1,26 @@
+name: trivy-scan
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Trivy CLI
+        uses: aquasecurity/setup-trivy@v0.2.0
+        with:
+          cache: true
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
