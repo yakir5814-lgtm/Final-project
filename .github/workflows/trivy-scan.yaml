@@ -28,7 +28,7 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           exit-code: '1'
-          severity: '${{ inputs.severity_level || 'HIGH,CRITICAL' }}'
+          severity: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.severity_level || 'HIGH,CRITICAL' }}
           cache: true
 
       - name: Build Application
