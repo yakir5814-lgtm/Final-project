@@ -10,3 +10,10 @@ jobs:
     steps:
       - name: Print message
         run: echo "Hello GitHub Actions"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: hello
+    steps:
+      - name: do build
+        run: echo "building app"
