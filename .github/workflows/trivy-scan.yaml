@@ -4,6 +4,17 @@ on:
   push:
     branches: [ "main", "dev" ]
   workflow_dispatch:
+    # 2. הוספת קלטים מותאמים אישית להרצה ידנית (custom action inputs)
+    inputs:
+      severity_level:
+        description: 'Choose scan severity level'
+        required: true
+        default: 'HIGH,CRITICAL'
+        type: choice
+        options:
+          - 'CRITICAL'
+          - 'HIGH,CRITICAL'
+          - 'LOW,MEDIUM,HIGH,CRITICAL'
 
 jobs:
   scan:
@@ -12,6 +23,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 1. שימוש בבופר/מטמון מובנה של ה-Action (dependency cache)
       - name: Install Trivy CLI
         uses: aquasecurity/setup-trivy@v0.2.0
         with:
@@ -23,4 +35,4 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           exit-code: '1'
-          severity: 'HIGH,CRITICAL'
+          severity: '${{ github.event.inputs.severity_level || 'HIGH,CRITICAL' }}'
