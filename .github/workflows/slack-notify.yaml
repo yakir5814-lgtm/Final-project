@@ -1,0 +1,33 @@
+name: Slack Notification Lab
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Tests
+        run: echo "Running core application tests..."
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Build Application
+        run: echo "Building application assets and artifacts..."
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Send Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: elevy99927-alerts
+          SLACK_COLOR: '#36a64f'
+          SLACK_MESSAGE: 'The GitHub Actions workflow executed and completed successfully! 🚀'
+          SLACK_TITLE: 'Pipeline Success Alert'
