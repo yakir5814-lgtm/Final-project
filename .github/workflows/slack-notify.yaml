@@ -1,4 +1,4 @@
-name: Slack Notification Lab
+name: Slack and Email Notification Lab
 
 on:
   push:
@@ -11,21 +11,18 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Docker Build
-        run: echo "Running 'docker build' for the application..."
-
+        run: echo "Running 'docker build'..."
       - name: Docker Push
-        run: echo "Running 'docker push' to repository..."
+        run: echo "Running 'docker push'..."
 
   helm-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Helm Template Validation
-        run: echo "Running 'helm template' to validate manifests..."
+        run: echo "Running 'helm template'..."
 
   notify:
     runs-on: ubuntu-latest
@@ -37,5 +34,17 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_CHANNEL: elevy99927-alerts
           SLACK_COLOR: '#36a64f'
-          SLACK_MESSAGE: 'The Pipeline finished successfully! Docker build/push and Helm template steps passed. 🚀'
+          SLACK_MESSAGE: 'The Pipeline finished successfully! Docker and Helm steps passed. 🚀'
           SLACK_TITLE: 'Pipeline Success Alert'
+
+      - name: Send Email Notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: yakir5814@gmail.com
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Pipeline Success Alert - Job Finished"
+          to: yakir5814@gmail.com
+          from: "GitHub Actions CI/CD"
+          body: "The GitHub Actions workflow executed and completed successfully! Docker build/push and Helm template steps passed."
