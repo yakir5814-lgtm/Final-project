@@ -3,16 +3,14 @@ kind: ServiceMonitor
 metadata:
   name: {{ .Chart.Name }}-monitor
   labels:
-
     {{- include "spring.labels" . | nindent 4 }}
-
-    release: prometheus 
+    release: prometheus
 spec:
   selector:
     matchLabels:
-
+      # תואם לסלקטור שמוגדר ב-service.yaml שלך כדי למצוא את הסרוויס הנכון
       app: {{ .Chart.Name }}
   endpoints:
-  - port: http # שם הפורט המדויק מתוך ה-service.yaml שלך
-    path: /metrics # הכתובת באפליקציה שבה הקוד שלך חושף את המטריקות
-    interval: 15s # תדירות איסוף הנתונים (כל 15 שניות)
+  - port: http
+    path: /metrics 
+    interval: 15s 
