@@ -8,7 +8,6 @@ metadata:
 spec:
   selector:
     matchLabels:
-      # תואם לסלקטור שמוגדר ב-service.yaml שלך כדי למצוא את הסרוויס הנכון
       app: {{ .Chart.Name }}
   endpoints:
   - port: http
