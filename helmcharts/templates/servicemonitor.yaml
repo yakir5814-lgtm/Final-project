@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Chart.Name }}-monitor
+  labels:
+
+    {{- include "spring.labels" . | nindent 4 }}
+
+    release: prometheus 
+spec:
+  selector:
+    matchLabels:
+
+      app: {{ .Chart.Name }}
+  endpoints:
+  - port: http # שם הפורט המדויק מתוך ה-service.yaml שלך
+    path: /metrics # הכתובת באפליקציה שבה הקוד שלך חושף את המטריקות
+    interval: 15s # תדירות איסוף הנתונים (כל 15 שניות)
