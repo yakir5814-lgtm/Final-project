@@ -21,7 +21,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         }
         stage('Push') {
             container('docker') {
-                withCredentials([usernamePassword(credentialsId: 'Jenkinsfile', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'my-login-secret', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh "docker login -u $DOCKER_USER -p $DOCKER_PASS"
                     sh "docker push " + appimage + ":" + apptag
                 }
