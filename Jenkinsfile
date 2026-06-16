@@ -16,14 +16,14 @@ podTemplate(cloud: 'kubernetes', containers: [
         }
         stage('Build') {
             container('docker') {
-                sh "docker build -t " + appimage + ":" + apptag + " ."
+                sh "docker build -t ${appimage}:${apptag} ."
             }
         }
         stage('Push') {
             container('docker') {
                 withCredentials([usernamePassword(credentialsId: 'my-login-secret', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh "docker login -u $DOCKER_USER -p $DOCKER_PASS"
-                    sh "docker push " + appimage + ":" + apptag
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh "docker push ${appimage}:${apptag}"
                 }
             }
         }
