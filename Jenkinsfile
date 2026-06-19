@@ -6,10 +6,11 @@ def apptag = env.BUILD_NUMBER
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
     containerTemplate(name: 'docker', image: 'docker:26-dind', privileged: true, args: '--storage-driver=vfs'),
-    // הוספנו command: 'cat' ו-ttyEnabled כדי שהקונטיינר לא ייסגר מיד
+    // הוספת command ו-args כדי להבטיח שהקונטיינר יישאר זמין לביצוע פקודות
     containerTemplate(name: 'kubectl', image: 'bitnami/kubectl:latest', command: 'cat', ttyEnabled: true)
     ],
     volumes: [emptyDirVolume(mountPath: '/var/lib/docker', memory: false)]) {
+    
     node(POD_LABEL) {
         
         stage('Checkout') {
@@ -33,8 +34,11 @@ podTemplate(cloud: 'kubernetes', containers: [
 
         stage('Deploy') {
             container('kubectl') {
-                // וודא ששם ה-Deployment הוא באמת nginx
-                sh "kubectl set image deployment/nginx nginx=${appimage}:${apptag}"
+                // נריץ פקודה אחת מרוכזת ונקייה
+                sh """
+                    echo "Updating deployment..."
+                    kubectl set image deployment/nginx nginx=${appimage}:${apptag}
+                """
             }
         }
 
