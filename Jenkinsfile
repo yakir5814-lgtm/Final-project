@@ -31,34 +31,30 @@ podTemplate(cloud: 'kubernetes', containers: [
 
         stage('Deploy') {
             container('jnlp') {
-                // שימוש ב-withCredentials בצורה בטוחה כדי למנוע את ה-Warning
                 withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                     script {
+                        // 1. ניקוי ושכפול ה-GitOps Repo
                         sh 'rm -rf gitops'
-                        // שימוש בסינטקס בטוח למניעת חשיפת הסוד
                         sh 'git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/yakir5814-lgtm/gitops.git'
                         
-                        // דיבג: הצגת מבנה התיקיות כדי לראות איפה הקבצים שלך באמת
-                        sh 'find gitops -maxdepth 3'
-                        
-                        // מציאת קובץ ה-deployment.yaml בכל מקום בתוך התיקייה
-                        def targetFile = sh(script: 'find gitops -name "deployment.yaml" | head -n 1', returnStdout: true).trim()
+                        // 2. מציאת הקובץ הראשון שנמצא עם סיומת yaml בתוך תיקיית apps
+                        def targetFile = sh(script: 'find gitops/apps -name "*.yaml" | head -n 1', returnStdout: true).trim()
                         
                         if (targetFile == "") {
-                            error "לא נמצא קובץ בשם deployment.yaml בתוך ה-Repository!"
+                            error "לא נמצא אף קובץ YAML בתוך התיקייה gitops/apps!"
                         }
                         
-                        echo "נמצא קובץ בנתיב: ${targetFile}"
+                        echo "מעדכן את הקובץ: ${targetFile}"
                         
-                        // עדכון ה-Image
+                        // 3. עדכון ה-Image בתוך הקובץ שנמצא
                         sh "sed -i 's|image:.*|image: ${appimage}:${apptag}|g' ${targetFile}"
                         
-                        // ביצוע Commit ו-Push
+                        // 4. שליחת השינויים חזרה ל-GitHub
                         dir('gitops') {
                             sh '''
                                 git config user.email "jenkins@jenkins.com"
                                 git config user.name "Jenkins"
-                                git add .
+                                git add apps/
                                 git commit -m "Update image to ${apptag}"
                                 git push origin main
                             '''
