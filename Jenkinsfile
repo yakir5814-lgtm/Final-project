@@ -6,7 +6,6 @@ def apptag = env.BUILD_NUMBER
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
     containerTemplate(name: 'docker', image: 'docker:26-dind', privileged: true, args: '--storage-driver=vfs'),
-    // הוספת command ו-args כדי להבטיח שהקונטיינר יישאר זמין לביצוע פקודות
     containerTemplate(name: 'kubectl', image: 'bitnami/kubectl:latest', command: 'cat', ttyEnabled: true)
     ],
     volumes: [emptyDirVolume(mountPath: '/var/lib/docker', memory: false)]) {
@@ -34,11 +33,19 @@ podTemplate(cloud: 'kubernetes', containers: [
 
         stage('Deploy') {
             container('kubectl') {
-                // נריץ פקודה אחת מרוכזת ונקייה
-                sh """
-                    echo "Updating deployment..."
-                    kubectl set image deployment/nginx nginx=${appimage}:${apptag}
-                """
+                script {
+                    def namespace = "default" 
+                    def deploymentName = "nginx"
+                    
+                    try {
+                        // מוודא שה-Deployment קיים לפני שמנסים לעדכן
+                        sh "kubectl get deployment/${deploymentName} -n ${namespace}"
+                        sh "kubectl set image deployment/${deploymentName} ${deploymentName}=${appimage}:${apptag} -n ${namespace}"
+                    } catch (Exception e) {
+                        echo "DEPLOY FAILED! Check if deployment '${deploymentName}' exists in namespace '${namespace}'"
+                        throw e
+                    }
+                }
             }
         }
 
