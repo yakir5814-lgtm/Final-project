@@ -27,6 +27,24 @@ podTemplate(cloud: 'kubernetes', containers: [
                 }
             }
         }
+        stage('Deploy') {
+            container('jnlp') {
+                // שימוש ב-Credential של GitHub שחובה להגדיר ב-Jenkins תחת השם הזה
+                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+                    sh """
+                        git clone https://${GIT_TOKEN}@github.com/yakir5814-lgtm/gitops.git
+                        cd gitops/apps
+                        # עדכון ה-image בתוך קובץ ה-deployment.yaml
+                        sed -i 's|image:.*|image: ${appimage}:${apptag}|g' deployment.yaml
+                        git config user.email "jenkins@jenkins.com"
+                        git config user.name "Jenkins"
+                        git add deployment.yaml
+                        git commit -m "Update image to ${apptag}"
+                        git push origin main
+                    """
+                }
+            }
+        }
         stage('Done') {
             container('jnlp') {
                 echo "Pipeline finished!"
