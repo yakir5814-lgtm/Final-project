@@ -31,33 +31,36 @@ podTemplate(cloud: 'kubernetes', containers: [
             container('jnlp') {
                 withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                     script {
-                        // 1. שכפול ה-Repo
-                        sh "git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/yakir5814-lgtm/gitops.git"
+                        // 1. שכפול ה-Repo (שימוש ב-single quotes מונע את אזהרת האבטחה)
+                        sh 'git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/yakir5814-lgtm/gitops.git'
                         
-                        // 2. הצגת המבנה כדי למצוא איפה הקובץ (לצורך ניפוי שגיאות)
-                        sh "ls -R gitops/"
+                        // 2. חיפוש הקובץ כדי לוודא נתיב
+                        sh "find . -name deployment.yaml"
                         
-                        // 3. עדכון הקובץ (תקן את הנתיב 'gitops/apps' אם ה-ls הראה משהו אחר)
+                        // 3. עדכון הקובץ עם בדיקת קיום
+                        // החלפתי ל-dir דינמי בהתאם למציאות של הקובץ אם התיקייה משתנה
                         dir('gitops/apps') {
-                            sh "sed -i 's|image:.*|image: ${appimage}:${apptag}|g' deployment.yaml"
-                            
-                            // 4. commit ו-push
-                            sh """
-                                git config user.email "jenkins@jenkins.com"
-                                git config user.name "Jenkins"
-                                git add deployment.yaml
-                                git commit -m 'Update image to ${apptag}'
-                                git push origin main
-                            """
+                            if (fileExists('deployment.yaml')) {
+                                sh "sed -i 's|image:.*|image: ${appimage}:${apptag}|g' deployment.yaml"
+                                
+                                // 4. commit ו-push
+                                sh '''
+                                    git config user.email "jenkins@jenkins.com"
+                                    git config user.name "Jenkins"
+                                    git add deployment.yaml
+                                    git commit -m "Update image to ${apptag}"
+                                    git push origin main
+                                '''
+                            } else {
+                                error "deployment.yaml not found in gitops/apps!"
+                            }
                         }
                     }
                 }
             }
         }
         stage('Done') {
-            container('jnlp') {
-                echo "Pipeline finished!"
-            }
+            echo "Pipeline finished!"
         }
     }
 }
