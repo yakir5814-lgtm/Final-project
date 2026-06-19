@@ -31,25 +31,24 @@ podTemplate(cloud: 'kubernetes', containers: [
             container('jnlp') {
                 withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                     script {
-                        // 1. ניקוי סביבה לפני שכפול
+                        // ניקוי סביבה קודמת
                         sh 'rm -rf gitops'
-                        
-                        // 2. שכפול ה-Repo (שימוש בגרשיים בודדים מונע דליפת סוד)
+                        // שיבוט ה-Repo (שימוש בגרשיים בודדים למניעת אזהרת אבטחה)
                         sh 'git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/yakir5814-lgtm/gitops.git'
                         
-                        // 3. כניסה לתיקייה ועדכון הקובץ
-                        // חשוב: אם ה-deployment.yaml לא נמצא ב-apps, שנה כאן את הנתיב!
+                        // כניסה לתיקיית apps ועדכון הקובץ
+                        // *** וודא ששם הקובץ 'deployment.yaml' תואם למה שיש לך בגיטהאב ***
                         dir('gitops/apps') {
                             sh "sed -i 's|image:.*|image: ${appimage}:${apptag}|g' deployment.yaml"
                             
-                            // 4. commit ו-push
-                            sh """
+                            // העלאת השינויים לגיטהאב
+                            sh '''
                                 git config user.email "jenkins@jenkins.com"
                                 git config user.name "Jenkins"
                                 git add deployment.yaml
-                                git commit -m 'Update image to ${apptag}'
+                                git commit -m "Update image to ${apptag}"
                                 git push origin main
-                            """
+                            '''
                         }
                     }
                 }
