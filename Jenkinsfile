@@ -1,5 +1,4 @@
 def appname = "final-project"
-// השם של המשתמש ב-Docker Hub
 def repo = "yakirmehager" 
 def appimage = repo + "/" + appname
 def apptag = env.BUILD_NUMBER
@@ -57,7 +56,6 @@ podTemplate(cloud: 'kubernetes',
                         ssh-keyscan github.com >> ~/.ssh/known_hosts
                         
                         rm -rf gitops
-                        # שימוש בנתיב הנכון של ה-GitOps Repo שלך
                         git clone git@github.com:yakir5814-lgtm/gitops.git
                         
                         cd gitops/apps
