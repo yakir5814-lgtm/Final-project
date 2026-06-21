@@ -29,11 +29,24 @@ podTemplate(cloud: 'kubernetes', containers: [
                 }
             }
         }
-        stage('Deploy to ArgoCD') {
-            container('kubectl') { 
-                sh "kubectl set image deployment/${appname} ${appname}=${appimage}:${apptag} -n default"
-                sh "argocd app sync test-yakir123 --server argocd-server:443 --plaintext"
-                echo "Triggered deployment update for ${appimage}:${apptag}"
+       stage('Update GitOps Repo') {
+    container('jnlp') {
+        // כאן אתה צריך להגדיר Credentials ל-GitHub ב-Jenkins
+        sshagent(['github-ssh-key']) {
+            sh '''
+                git clone git@github.com:yakir5814-lgtm/gitops.git
+                cd gitops/apps
+                # עדכון גרסת ה-Image בקובץ ה-YAML
+                sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
+                git config user.email "jenkins@jenkins.com"
+                git config user.name "Jenkins"
+                git add .
+                git commit -m "Update image to ${apptag}"
+                git push origin main
+            '''
+        }
+    }
+}
             }
         }
         stage('Done') {
