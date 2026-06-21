@@ -56,17 +56,24 @@ podTemplate(cloud: 'kubernetes',
                         ssh-keyscan github.com >> ~/.ssh/known_hosts
                         
                         rm -rf gitops
+                        # השתמשתי בכתובת המלאה, וודא שזה השם המדויק של הריפו בגיטהאב
                         git clone git@github.com:${repo}/gitops.git
                         
                         cd gitops/apps
                         
-                        sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
-                        
-                        git config user.email jenkins@jenkins.com
-                        git config user.name Jenkins
-                        git add nginx-deployment.yaml
-                        git commit -m "Update image to ${apptag}"
-                        git push origin main
+                        # וודא שהקובץ קיים לפני ה-sed
+                        if [ -f "nginx-deployment.yaml" ]; then
+                            sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
+                            
+                            git config user.email jenkins@jenkins.com
+                            git config user.name Jenkins
+                            git add nginx-deployment.yaml
+                            git commit -m "Update image to ${apptag}"
+                            git push origin main
+                        else
+                            echo "Error: nginx-deployment.yaml not found in gitops/apps"
+                            exit 1
+                        fi
                     """
                 }
             }
