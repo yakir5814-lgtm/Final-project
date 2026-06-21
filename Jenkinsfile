@@ -1,7 +1,7 @@
 def appname = "final-project"
-// כאן שיניתי ל-repo הנכון כפי שמופיע בכתובת ה-URL שצירפת
-def repo = "yakir5814-lgtm" 
-def appimage = "docker.io/" + repo + "/" + appname
+// השם של המשתמש ב-Docker Hub
+def repo = "yakirmehager" 
+def appimage = repo + "/" + appname
 def apptag = env.BUILD_NUMBER
 
 podTemplate(cloud: 'kubernetes', 
@@ -51,19 +51,18 @@ podTemplate(cloud: 'kubernetes',
         
         stage('Update GitOps Repo') {
             container('jnlp') {
-                // וודא שה-Credential מוגדר נכון ב-Jenkins
                 sshagent(['github-ssh-key']) {
                     sh """
                         mkdir -p ~/.ssh
                         ssh-keyscan github.com >> ~/.ssh/known_hosts
                         
                         rm -rf gitops
-                        // התיקון כאן בכתובת ה-Clone
-                        git clone git@github.com:${repo}/gitops.git
+                        # שימוש בנתיב הנכון של ה-GitOps Repo שלך
+                        git clone git@github.com:yakir5814-lgtm/gitops.git
                         
                         cd gitops/apps
                         
-                        sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
+                        sed -i "s|image: .*|image: docker.io/${appimage}:${apptag}|g" nginx-deployment.yaml
                         
                         git config user.email jenkins@jenkins.com
                         git config user.name Jenkins
