@@ -1,5 +1,6 @@
 def appname = "final-project"
-def repo = "yakirmehager"
+// כאן שיניתי ל-repo הנכון כפי שמופיע בכתובת ה-URL שצירפת
+def repo = "yakir5814-lgtm" 
 def appimage = "docker.io/" + repo + "/" + appname
 def apptag = env.BUILD_NUMBER
 
@@ -50,11 +51,15 @@ podTemplate(cloud: 'kubernetes',
         
         stage('Update GitOps Repo') {
             container('jnlp') {
-                // שימוש ב-Credentials של HTTPS במקום SSH
-                withCredentials([usernamePassword(credentialsId: 'github-pat-secret', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+                // וודא שה-Credential מוגדר נכון ב-Jenkins
+                sshagent(['github-ssh-key']) {
                     sh """
+                        mkdir -p ~/.ssh
+                        ssh-keyscan github.com >> ~/.ssh/known_hosts
+                        
                         rm -rf gitops
-                        git clone https://${GH_USER}:${GH_TOKEN}@github.com/${repo}/gitops.git
+                        // התיקון כאן בכתובת ה-Clone
+                        git clone git@github.com:${repo}/gitops.git
                         
                         cd gitops/apps
                         
@@ -64,7 +69,7 @@ podTemplate(cloud: 'kubernetes',
                         git config user.name Jenkins
                         git add nginx-deployment.yaml
                         git commit -m "Update image to ${apptag}"
-                        git push https://${GH_USER}:${GH_TOKEN}@github.com/${repo}/gitops.git main
+                        git push origin main
                     """
                 }
             }
