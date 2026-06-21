@@ -27,7 +27,6 @@ podTemplate(cloud: 'kubernetes',
         
         stage('Build') {
             container('docker') {
-                // המתנה לווידוא שה-Docker Daemon עלה לפני בניית האימג'
                 script {
                     timeout(time: 30, unit: 'SECONDS') {
                         waitUntil {
@@ -52,23 +51,21 @@ podTemplate(cloud: 'kubernetes',
         stage('Update GitOps Repo') {
             container('jnlp') {
                 sshagent(['github-ssh-key']) {
-                    sh '''
-                        # הוספת ה-Fingerprint של GitHub למניעת שגיאת Host key
-                        mkdir -p ~/.ssh
-                        ssh-keyscan github.com >> ~/.ssh/known_hosts
-                        
-                        git clone git@github.com:yakir5814-lgtm/gitops.git
+                    sh """
+                        # שיבוט הריפו של ה-GitOps (מומלץ לוודא שהתיקייה לא קיימת מהרצה קודמת)
+                        rm -rf gitops
+                        git clone git@github.com:${repo}/gitops.git
                         cd gitops/apps
                         
-                        # עדכון האימג' בקובץ ה-YAML
+                        # שימוש במשתנים שהגדרנו למעלה כדי לעדכן את האימג'
                         sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
                         
-                        git config user.email "jenkins@jenkins.com"
-                        git config user.name "Jenkins"
+                        git config user.email jenkins@jenkins.com
+                        git config user.name Jenkins
                         git add nginx-deployment.yaml
                         git commit -m "Update image to ${apptag}"
                         git push origin main
-                    '''
+                    """
                 }
             }
         }
