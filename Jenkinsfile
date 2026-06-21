@@ -5,9 +5,11 @@ def apptag = env.BUILD_NUMBER
 
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
-    containerTemplate(name: 'docker', image: 'docker:26-dind', privileged: true, args: '--storage-driver=vfs')
+    containerTemplate(name: 'docker', image: 'docker:26-dind', privileged: true, args: '--storage-driver=vfs'),
+    containerTemplate(name: 'kubectl', image: 'bitnami/kubectl:latest')
     ],
     volumes: [emptyDirVolume(mountPath: '/var/lib/docker', memory: false)]) {
+    
     node(POD_LABEL) {
         stage('Checkout') {
             container('jnlp') {
@@ -25,6 +27,13 @@ podTemplate(cloud: 'kubernetes', containers: [
                     sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                     sh "docker push ${appimage}:${apptag}"
                 }
+            }
+        }
+        stage('Deploy to ArgoCD') {
+            container('kubectl') { 
+                sh "kubectl set image deployment/${appname} ${appname}=${appimage}:${apptag} -n default"
+                sh "argocd app sync test-yakir123 --server argocd-server:443 --plaintext"
+                echo "Triggered deployment update for ${appimage}:${apptag}"
             }
         }
         stage('Done') {
