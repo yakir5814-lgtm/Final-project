@@ -52,12 +52,14 @@ podTemplate(cloud: 'kubernetes',
             container('jnlp') {
                 sshagent(['github-ssh-key']) {
                     sh """
-                        # שיבוט הריפו של ה-GitOps (מומלץ לוודא שהתיקייה לא קיימת מהרצה קודמת)
+                        mkdir -p ~/.ssh
+                        ssh-keyscan github.com >> ~/.ssh/known_hosts
+                        
                         rm -rf gitops
                         git clone git@github.com:${repo}/gitops.git
+                        
                         cd gitops/apps
                         
-                        # שימוש במשתנים שהגדרנו למעלה כדי לעדכן את האימג'
                         sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
                         
                         git config user.email jenkins@jenkins.com
