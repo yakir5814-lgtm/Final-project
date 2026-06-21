@@ -50,30 +50,21 @@ podTemplate(cloud: 'kubernetes',
         
         stage('Update GitOps Repo') {
             container('jnlp') {
-                sshagent(['github-ssh-key']) {
+                // שימוש ב-Credentials של HTTPS במקום SSH
+                withCredentials([usernamePassword(credentialsId: 'github-pat-secret', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
                     sh """
-                        mkdir -p ~/.ssh
-                        ssh-keyscan github.com >> ~/.ssh/known_hosts
-                        
                         rm -rf gitops
-                        # השתמשתי בכתובת המלאה, וודא שזה השם המדויק של הריפו בגיטהאב
-                        git clone git@github.com:${repo}/gitops.git
+                        git clone https://${GH_USER}:${GH_TOKEN}@github.com/${repo}/gitops.git
                         
                         cd gitops/apps
                         
-                        # וודא שהקובץ קיים לפני ה-sed
-                        if [ -f "nginx-deployment.yaml" ]; then
-                            sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
-                            
-                            git config user.email jenkins@jenkins.com
-                            git config user.name Jenkins
-                            git add nginx-deployment.yaml
-                            git commit -m "Update image to ${apptag}"
-                            git push origin main
-                        else
-                            echo "Error: nginx-deployment.yaml not found in gitops/apps"
-                            exit 1
-                        fi
+                        sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
+                        
+                        git config user.email jenkins@jenkins.com
+                        git config user.name Jenkins
+                        git add nginx-deployment.yaml
+                        git commit -m "Update image to ${apptag}"
+                        git push https://${GH_USER}:${GH_TOKEN}@github.com/${repo}/gitops.git main
                     """
                 }
             }
