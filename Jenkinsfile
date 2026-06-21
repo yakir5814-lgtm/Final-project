@@ -5,8 +5,7 @@ def apptag = env.BUILD_NUMBER
 
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
-    containerTemplate(name: 'docker', image: 'docker:26-dind', privileged: true, args: '--storage-driver=vfs'),
-    containerTemplate(name: 'kubectl', image: 'bitnami/kubectl:latest')
+    containerTemplate(name: 'docker', image: 'docker:26-dind', privileged: true, args: '--storage-driver=vfs')
     ],
     volumes: [emptyDirVolume(mountPath: '/var/lib/docker', memory: false)]) {
     
@@ -29,29 +28,26 @@ podTemplate(cloud: 'kubernetes', containers: [
                 }
             }
         }
-       stage('Update GitOps Repo') {
-    container('jnlp') {
-        // כאן אתה צריך להגדיר Credentials ל-GitHub ב-Jenkins
-        sshagent(['github-ssh-key']) {
-            sh '''
-                git clone git@github.com:yakir5814-lgtm/gitops.git
-                cd gitops/apps
-                # עדכון גרסת ה-Image בקובץ ה-YAML
-                sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
-                git config user.email "jenkins@jenkins.com"
-                git config user.name "Jenkins"
-                git add .
-                git commit -m "Update image to ${apptag}"
-                git push origin main
-            '''
-        }
-    }
-}
+        stage('Update GitOps Repo') {
+            container('jnlp') {
+                sshagent(['github-ssh-key']) {
+                    sh '''
+                        git clone git@github.com:yakir5814-lgtm/gitops.git
+                        cd gitops/apps
+                        # מעדכן את האימג' בקובץ ה-YAML שנמצא ב-Repo של ה-gitops
+                        sed -i "s|image: .*|image: ${appimage}:${apptag}|g" nginx-deployment.yaml
+                        git config user.email "jenkins@jenkins.com"
+                        git config user.name "Jenkins"
+                        git add nginx-deployment.yaml
+                        git commit -m "Update image to ${apptag}"
+                        git push origin main
+                    '''
+                }
             }
         }
         stage('Done') {
             container('jnlp') {
-                echo "Pipeline finished!"
+                echo "Pipeline finished! ArgoCD will sync automatically now."
             }
         }
     }
