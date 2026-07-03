@@ -1,2 +1,4 @@
 flask
-prometheus_client
+yfinance
+feedparser
+prometheus-flask-exporter
