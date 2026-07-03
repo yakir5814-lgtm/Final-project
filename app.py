@@ -2,54 +2,75 @@ from flask import Flask
 
 app = Flask(__name__)
 
-GAME_3D_HTML = """
+FULL_GAME_HTML = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>School Journey 3D</title>
+    <title>School Journey: The Game</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>body { margin: 0; overflow: hidden; } canvas { display: block; }</style>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        body { margin: 0; background: #000; font-family: 'Arial'; }
+        #overlay { position: absolute; top: 20px; left: 20px; color: white; pointer-events: none; }
+    </style>
 </head>
 <body>
+    <div id="overlay"><h1>School Journey: GTA Style</h1><p>Arrows to walk | Space to Interact</p></div>
+    <audio id="bg-music" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
+
     <script>
-        // 1. הגדרת זירת המשחק
+        // אתחול סצינה
         const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // 2. יצירת "הילד" (דמות פשוטה כרגע, אפשר להחליף במודל 3D)
-        const geometry = new THREE.BoxGeometry(0.5, 1.5, 0.5);
-        const material = new THREE.MeshPhongMaterial({ color: 0x38bdf8 });
-        const player = new THREE.Mesh(geometry, material);
-        scene.add(player);
+        // תאורה ריאליסטית
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
 
-        // 3. תאורה (בשביל איכות של סרט אנימציה)
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(5, 5, 5);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
-
-        // 4. מסלול הליכה (הרחוב)
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshPhongMaterial({ color: 0x222222 }));
+        // יצירת רצפת עולם
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshPhongMaterial({ color: 0x228B22 }));
         ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
 
-        camera.position.set(0, 2, 5);
-        player.add(camera); // המצלמה עוקבת אחרי השחקן (GTA style)
+        // יצירת "מכולת" (בניין)
+        const shop = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 10), new THREE.MeshPhongMaterial({ color: 0x8B4513 }));
+        shop.position.set(20, 2.5, 0);
+        scene.add(shop);
 
-        // 5. לוגיקת תנועה
-        document.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowUp') player.position.z -= 0.1;
-            if(e.key === 'ArrowDown') player.position.z += 0.1;
-            if(e.key === 'ArrowLeft') player.position.x -= 0.1;
-            if(e.key === 'ArrowRight') player.position.x += 0.1;
-        });
+        // דמות השחקן (הילד)
+        const player = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.7, 0.5), new THREE.MeshPhongMaterial({ color: 0xff0000 }));
+        player.position.set(0, 0.85, 0);
+        scene.add(player);
+
+        // מצלמה (גוף שלישי)
+        camera.position.set(0, 3, 7);
+        player.add(camera);
+
+        // תנועה
+        const keys = {};
+        document.addEventListener('keydown', (e) => keys[e.code] = true);
+        document.addEventListener('keyup', (e) => keys[e.code] = false);
+
+        function update() {
+            if(keys['ArrowUp']) player.position.z -= 0.1;
+            if(keys['ArrowDown']) player.position.z += 0.1;
+            if(keys['ArrowLeft']) player.position.x -= 0.1;
+            if(keys['ArrowRight']) player.position.x += 0.1;
+            
+            // הפעלת מוזיקה בהתחלה
+            if(keys['ArrowUp']) document.getElementById('bg-music').play();
+        }
 
         function animate() {
-            requestAnimationFrame(animate);
+            update();
             renderer.render(scene, camera);
+            requestAnimationFrame(animate);
         }
         animate();
     </script>
@@ -59,7 +80,7 @@ GAME_3D_HTML = """
 
 @app.route('/')
 def index():
-    return GAME_3D_HTML
+    return FULL_GAME_HTML
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
