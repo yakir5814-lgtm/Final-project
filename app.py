@@ -4,7 +4,6 @@ import feedparser
 
 app = Flask(__name__)
 
-# עיצוב מותאם: רבע מסך למניות (צד ימין), שלושה רבעים לחדשות (צד שמאל)
 GLOBAL_STYLE = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
@@ -22,11 +21,9 @@ GLOBAL_STYLE = """
 
 @app.route('/')
 def index():
-    # 1. חדשות פיננסיות מעודכנות (RSS)
     feed = feedparser.parse("https://finance.yahoo.com/rss/headline?s=AAPL,NVDA,GOOGL,ANET,ALAB")
     news_html = "".join([f"<div class='glass-card'><b>{item.title}</b><br><a href='{item.link}' target='_blank'>קרא עוד...</a></div>" for item in feed.entries[:6]])
     
-    # 2. טבלת מניות (רבע רוחב)
     tickers = ["AAPL", "GOOGL", "NVDA", "ANET", "ALAB", "CRDO", "KLIC", "SIMO"]
     stocks_html = ""
     for s in tickers:
@@ -51,10 +48,12 @@ def index():
 
 @app.route('/game')
 def game():
-    # גרסת HTML5 יציבה למריו
-    return f"{GLOBAL_STYLE}<h1>Super Mario Arcade</h1><div style='text-align:center;'>
-    <iframe src='https://playclassic.games/games/super-mario-bros-online/play/' width='900' height='650'></iframe>
-    <br><br><a href='/'>← חזור למסחר</a></div>"
+    return f"""{GLOBAL_STYLE}
+    <h1>Super Mario Arcade</h1>
+    <div style='text-align:center;'>
+        <iframe src='https://playclassic.games/games/super-mario-bros-online/play/' width='900' height='650'></iframe>
+        <br><br><a href='/'>← חזור למסחר</a>
+    </div>"""
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
