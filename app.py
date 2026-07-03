@@ -1,65 +1,57 @@
-from flask import Flask, Response
-import yfinance as yf
+from flask import Flask
 
 app = Flask(__name__)
 
-GAME_HTML = """
+GAME_3D_HTML = """
 <!DOCTYPE html>
 <html>
 <head>
-    <style>
-        body { margin: 0; background: #000; color: #fff; font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        #canvas { background: linear-gradient(#222, #000); border: 5px solid #38bdf8; border-radius: 15px; }
-        .overlay { position: absolute; text-align: center; }
-        button { padding: 20px 40px; font-size: 24px; background: #38bdf8; border: none; border-radius: 50px; color: white; cursor: pointer; transition: 0.3s; }
-        button:hover { transform: scale(1.1); background: #818cf8; }
-    </style>
+    <title>School Journey 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>body { margin: 0; overflow: hidden; } canvas { display: block; }</style>
 </head>
 <body>
-    <audio id="bg-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
-    <div id="ui" class="overlay">
-        <h1>CYBER RACE 2026</h1>
-        <button onclick="startGame()">START GAME</button>
-    </div>
-    <canvas id="canvas" width="800" height="600"></canvas>
-
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let gameActive = false;
-        
-        // 5 מכוניות עם צבעים שונים
-        const cars = [
-            {x: 100, y: 100, color: 'red'}, {x: 100, y: 200, color: 'blue'},
-            {x: 100, y: 300, color: 'yellow'}, {x: 100, y: 400, color: 'green'},
-            {x: 100, y: 500, color: 'purple'}
-        ];
+        // 1. הגדרת זירת המשחק
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        function startGame() {
-            document.getElementById('ui').style.display = 'none';
-            document.getElementById('bg-music').play();
-            gameActive = true;
-            animate();
-        }
+        // 2. יצירת "הילד" (דמות פשוטה כרגע, אפשר להחליף במודל 3D)
+        const geometry = new THREE.BoxGeometry(0.5, 1.5, 0.5);
+        const material = new THREE.MeshPhongMaterial({ color: 0x38bdf8 });
+        const player = new THREE.Mesh(geometry, material);
+        scene.add(player);
+
+        // 3. תאורה (בשביל איכות של סרט אנימציה)
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // 4. מסלול הליכה (הרחוב)
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshPhongMaterial({ color: 0x222222 }));
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        camera.position.set(0, 2, 5);
+        player.add(camera); // המצלמה עוקבת אחרי השחקן (GTA style)
+
+        // 5. לוגיקת תנועה
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowUp') player.position.z -= 0.1;
+            if(e.key === 'ArrowDown') player.position.z += 0.1;
+            if(e.key === 'ArrowLeft') player.position.x -= 0.1;
+            if(e.key === 'ArrowRight') player.position.x += 0.1;
+        });
 
         function animate() {
-            if(!gameActive) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // ציור מסלול
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, 80, 800, 440);
-            
-            // תנועת מכוניות
-            cars.forEach(car => {
-                car.x += Math.random() * 5;
-                ctx.fillStyle = car.color;
-                ctx.fillRect(car.x, car.y, 60, 30);
-                if(car.x > 740) car.x = 0;
-            });
-
             requestAnimationFrame(animate);
+            renderer.render(scene, camera);
         }
+        animate();
     </script>
 </body>
 </html>
@@ -67,11 +59,7 @@ GAME_HTML = """
 
 @app.route('/')
 def index():
-    return "<a href='/game'>Launch Game</a>"
-
-@app.route('/game')
-def game():
-    return GAME_HTML
+    return GAME_3D_HTML
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
