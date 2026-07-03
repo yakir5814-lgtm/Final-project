@@ -2,3 +2,5 @@ flask
 yfinance
 feedparser
 prometheus-flask-exporter
+plotly
+pandas
