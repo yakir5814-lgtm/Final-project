@@ -3,7 +3,7 @@ import yfinance as yf
 
 app = Flask(__name__)
 
-# עיצוב מודרני (Glassmorphism) שנשמר כפי שרצית
+# עיצוב מודרני (Glassmorphism)
 GLOBAL_STYLE = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
@@ -27,7 +27,6 @@ def index():
     for s in tickers:
         ticker = yf.Ticker(s)
         try:
-            # שליפת היסטוריה לחישוב שינוי יומי
             hist = ticker.history(period="2d")
             curr_price = hist['Close'].iloc[-1]
             prev_price = hist['Close'].iloc[-2]
@@ -50,7 +49,6 @@ def index():
         <p style='color:#94a3b8;'>Now Playing: Bob Marley - Three Little Birds</p>
         <audio controls autoplay loop>
             <source src='https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' type='audio/mpeg'>
-            Your browser does not support the audio element.
         </audio>
         <br><br>
         <a href='/game' style='font-size: 1.2rem; border: 1px solid #38bdf8; padding: 10px 20px; border-radius: 10px;'>🎮 LAUNCH SUPER MARIO ARCADE</a>
@@ -59,9 +57,12 @@ def index():
 
 @app.route('/game')
 def game():
-    return f"{GLOBAL_STYLE}<h1>Super Mario Arcade</h1><div style='text-align:center;'>
-    <iframe src='https://supermarioplay.com/' width='900' height='600' style='border-radius:20px; border:none;'></iframe>
-    <br><br><a href='/'>← Back to Mission Control</a></div>"
+    return f"""{GLOBAL_STYLE}
+    <h1>Super Mario Arcade</h1>
+    <div style='text-align:center;'>
+        <iframe src='https://supermarioplay.com/' width='900' height='600' style='border-radius:20px; border:none;'></iframe>
+        <br><br><a href='/'>← Back to Mission Control</a>
+    </div>"""
 
 @app.route('/stock/<symbol>')
 def stock_details(symbol):
