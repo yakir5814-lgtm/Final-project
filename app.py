@@ -1,55 +1,77 @@
 from flask import Flask, Response
-from prometheus_client import REGISTRY, generate_latest, CONTENT_TYPE_LATEST
 import yfinance as yf
 
 app = Flask(__name__)
 
-GLOBAL_STYLE = """
-<style>
-    body { background: #0f172a; color: white; font-family: 'Poppins', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-    canvas { border: 4px solid #38bdf8; border-radius: 10px; background: #000; box-shadow: 0 0 20px rgba(56, 189, 248, 0.5); }
-    .ui { margin: 20px; text-align: center; }
-</style>
+GAME_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        #canvas { background: linear-gradient(#222, #000); border: 5px solid #38bdf8; border-radius: 15px; }
+        .overlay { position: absolute; text-align: center; }
+        button { padding: 20px 40px; font-size: 24px; background: #38bdf8; border: none; border-radius: 50px; color: white; cursor: pointer; transition: 0.3s; }
+        button:hover { transform: scale(1.1); background: #818cf8; }
+    </style>
+</head>
+<body>
+    <audio id="bg-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <div id="ui" class="overlay">
+        <h1>CYBER RACE 2026</h1>
+        <button onclick="startGame()">START GAME</button>
+    </div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let gameActive = false;
+        
+        // 5 מכוניות עם צבעים שונים
+        const cars = [
+            {x: 100, y: 100, color: 'red'}, {x: 100, y: 200, color: 'blue'},
+            {x: 100, y: 300, color: 'yellow'}, {x: 100, y: 400, color: 'green'},
+            {x: 100, y: 500, color: 'purple'}
+        ];
+
+        function startGame() {
+            document.getElementById('ui').style.display = 'none';
+            document.getElementById('bg-music').play();
+            gameActive = true;
+            animate();
+        }
+
+        function animate() {
+            if(!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // ציור מסלול
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, 80, 800, 440);
+            
+            // תנועת מכוניות
+            cars.forEach(car => {
+                car.x += Math.random() * 5;
+                ctx.fillStyle = car.color;
+                ctx.fillRect(car.x, car.y, 60, 30);
+                if(car.x > 740) car.x = 0;
+            });
+
+            requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+</html>
 """
 
 @app.route('/')
 def index():
-    return f"{GLOBAL_STYLE}<h1>Eyal's Cyber Command</h1><div class='ui'><a href='/game'>🚀 ENTER BATTLEFIELD</a></div>"
+    return "<a href='/game'>Launch Game</a>"
 
 @app.route('/game')
 def game():
-    return f"""
-    {GLOBAL_STYLE}
-    <div class='ui'>
-        <h1>Soldiers vs Monsters</h1>
-        <p>Use Arrow Keys to move your soldier. Avoid the green monsters!</p>
-    </div>
-    <div id='game-container'></div>
-    <script src='https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js'></script>
-    <script>
-        const config = {{
-            type: Phaser.AUTO, width: 800, height: 400, parent: 'game-container',
-            physics: {{ default: 'arcade', arcade: {{ gravity: {{ y: 0 }} }} }},
-            scene: {{
-                preload: function() {{ this.load.image('soldier', 'https://labs.phaser.io/assets/sprites/phaser-dude.png'); }},
-                create: function() {{
-                    this.player = this.physics.add.sprite(400, 300, 'soldier');
-                    this.cursors = this.input.keyboard.createCursorKeys();
-                }},
-                update: function() {{
-                    if (this.cursors.left.isDown) this.player.setVelocityX(-200);
-                    else if (this.cursors.right.isDown) this.player.setVelocityX(200);
-                    else this.player.setVelocityX(0);
-                    if (this.cursors.up.isDown) this.player.setVelocityY(-200);
-                    else if (this.cursors.down.isDown) this.player.setVelocityY(200);
-                    else this.player.setVelocityY(0);
-                }}
-            }}
-        }};
-        const game = new Phaser.Game(config);
-    </script>
-    <br><a href='/'>Exit Battlefield</a>
-    """
+    return GAME_HTML
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
