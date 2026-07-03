@@ -1,89 +1,69 @@
 from flask import Flask, Response
-from prometheus_client import (
-    Counter, Gauge, Summary, Histogram, Info, Enum,
-    CollectorRegistry, Metric, generate_latest, CONTENT_TYPE_LATEST,
-    REGISTRY
-)
+from prometheus_client import Counter, Gauge, Summary, Histogram, Info, Enum, REGISTRY, generate_latest, CONTENT_TYPE_LATEST
 from prometheus_client.core import GaugeMetricFamily, CounterMetricFamily
 import time
 import random
 import threading
+import yfinance as yf
 
 app = Flask(__name__)
 
-# --- נתוני האפליקציה ---
-APP_INFO = {
-    "git_repo": "https://github.com/elevy99927/hello-newapp/tree/argo-solution",
-    "git_ops": "https://github.com/elevy99927/argo-demo-repo/tree/application",
-    "author": "Eyal Levy",
-    "email": "eyal@levys.co.il",
-}
+# --- הגדרת המדדים של Prometheus ---
+http_requests_total = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint'])
+cpu_usage = Gauge('cpu_usage_percent', 'Simulated CPU usage')
+cpu_usage.set_function(lambda: random.uniform(10.0, 90.0))
 
 @app.route('/')
 def index():
-    # סימולציה של נתוני מניות
-    stocks = [
-        {"name": "Apple", "symbol": "AAPL", "price": 175.50, "change": "+1.2%"},
-        {"name": "Google", "symbol": "GOOGL", "price": 140.20, "change": "-0.5%"},
-        {"name": "Nvidia", "symbol": "NVDA", "price": 1200.00, "change": "+3.4%"},
-    ]
+    # רשימת המניות למעקב
+    tickers = ["AAPL", "GOOGL", "NVDA"]
+    stocks = []
     
-    rows = "".join([f"<tr><td>{s['symbol']}</td><td>{s['name']}</td><td>${s['price']}</td><td style='color:green;'>{s['change']}</td></tr>" for s in stocks])
+    for symbol in tickers:
+        try:
+            ticker_obj = yf.Ticker(symbol)
+            # משיכת נתוני יום מסחר אחרון
+            hist = ticker_obj.history(period="1d")
+            price = hist['Close'].iloc[-1]
+            prev_price = hist['Open'].iloc[0]
+            change = ((price - prev_price) / prev_price) * 100
+            
+            stocks.append({
+                "symbol": symbol, 
+                "name": ticker_obj.info.get('shortName', symbol), 
+                "price": round(price, 2), 
+                "change": f"{change:+.2f}%"
+            })
+        except Exception as e:
+            stocks.append({"symbol": symbol, "name": "Error", "price": 0.0, "change": "0%"})
+    
+    # יצירת שורות הטבלה עם צבעים דינמיים
+    rows = "".join([
+        f"<tr><td>{s['symbol']}</td><td>{s['name']}</td><td>${s['price']}</td>"
+        f"<td style='color: {'green' if float(s['change'].replace('%','')) >= 0 else 'red'};'>"
+        f"{s['change']}</td></tr>" 
+        for s in stocks
+    ])
 
+    # החזרת דף ה-HTML עם רקע תכלת
     return (
-        "<style>body {font-family: Arial; background-color: #f4f4f9; padding: 20px;} "
+        "<style>body {font-family: Arial; background-color: #e0f7fa; padding: 20px;} " # רקע תכלת
         "table {width: 100%; border-collapse: collapse; background: white;} "
         "th, td {padding: 12px; border: 1px solid #ddd; text-align: left;}</style>"
         "<h1>📈 Eyal's Stock Market Dashboard</h1>"
         "<table><tr><th>Symbol</th><th>Name</th><th>Price</th><th>Change</th></tr>"
         f"{rows}</table>"
-        "<p>נתונים אלו מתעדכנים אוטומטית דרך מערכת ה-GitOps שלנו!</p>"
+        "<p>נתונים אלו מתעדכנים בזמן אמת מ-Yahoo Finance!</p>"
     )
 
 @app.route('/metrics')
 def metrics():
     return Response(generate_latest(REGISTRY), mimetype=CONTENT_TYPE_LATEST)
 
-# --- הגדרת המדדים של Prometheus ---
-http_requests_total = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint'])
-active_connections = Gauge('active_connections', 'Number of active connections')
-request_latency = Summary('request_latency_seconds', 'Request latency in seconds', ['endpoint'])
-response_time = Histogram('response_time_seconds', 'Response time in seconds', ['endpoint'], buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 5.0, float('inf')])
-app_info = Info('app', 'Application information')
-app_info.info({'version': '1.0.0', 'language': 'python', 'framework': 'prometheus_client'})
-app_state = Enum('app_state', 'Current application state', states=['starting', 'running', 'degraded', 'stopped'])
-app_state.state('running')
-error_total = Counter('errors_total', 'Total errors by type', ['error_type', 'severity'])
-request_duration = Histogram('request_duration_seconds', 'Request duration with exemplars')
-
-# --- Collector מותאם אישית ---
-class DatabaseCollector:
-    def collect(self):
-        connections = GaugeMetricFamily('db_connections', 'Database connections', labels=['state'])
-        connections.add_metric(['active'], random.randint(1, 50))
-        connections.add_metric(['idle'], random.randint(0, 10))
-        yield connections
-        queries = CounterMetricFamily('db_queries_total', 'Total database queries', labels=['type'])
-        queries.add_metric(['select'], random.randint(100, 10000))
-        queries.add_metric(['insert'], random.randint(10, 1000))
-        yield queries
-
-REGISTRY.register(DatabaseCollector())
-cpu_usage = Gauge('cpu_usage_percent', 'Simulated CPU usage')
-cpu_usage.set_function(lambda: random.uniform(10.0, 90.0))
-
 # --- פונקציית סימולציה ברקע ---
 def simulate_traffic():
     while True:
-        method = random.choice(['GET', 'POST', 'PUT', 'DELETE'])
-        endpoint = random.choice(['/api/users', '/api/orders', '/api/products'])
-        http_requests_total.labels(method=method, endpoint=endpoint).inc()
-        active_connections.set(random.randint(1, 100))
-        request_latency.labels(endpoint=endpoint).observe(random.uniform(0.01, 2.0))
-        response_time.labels(endpoint=endpoint).observe(random.uniform(0.01, 5.0))
-        error_type = random.choice(['timeout', 'connection', 'validation', 'auth'])
-        severity = random.choice(['low', 'medium', 'high'])
-        error_total.labels(error_type=error_type, severity=severity).inc()
+        http_requests_total.labels(method='GET', endpoint='/').inc()
         time.sleep(2)
 
 if __name__ == '__main__':
